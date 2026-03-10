@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="MicroSpring Boot - Minimal Java Web Server with IoC Framework">
+    <title>MicroSpring Boot</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 20px;
+            padding: 50px 60px;
+            max-width: 700px;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+        }
+
+        h1 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: #00c9ff;
+        }
+
+        .subtitle {
+            color: rgba(255,255,255,0.7);
+            font-size: 1rem;
+            margin-bottom: 40px;
+        }
+
+        .badge {
+            display: inline-block;
+            background: rgba(0,201,255,0.2);
+            border: 1px solid #00c9ff;
+            border-radius: 20px;
+            padding: 4px 14px;
+            font-size: 0.8rem;
+            color: #00c9ff;
+            margin-bottom: 30px;
+        }
+
+        .endpoints {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            margin-bottom: 40px;
+        }
+
+        .endpoint-card {
+            background: rgba(255,255,255,0.07);
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 12px;
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            text-decoration: none;
+            color: white;
+            transition: all 0.3s ease;
+        }
+
+        .endpoint-card:hover {
+            background: rgba(0,201,255,0.15);
+            border-color: #00c9ff;
+            transform: translateX(4px);
+        }
+
+        .method-badge {
+            background: #28a745;
+            border-radius: 6px;
+            padding: 3px 10px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            margin-right: 12px;
+        }
+
+        .endpoint-info {
+            text-align: left;
+            flex-grow: 1;
+        }
+
+        .endpoint-path {
+            font-family: monospace;
+            font-size: 1rem;
+            color: #92fe9d;
+        }
+
+        .endpoint-desc {
+            font-size: 0.8rem;
+            color: rgba(255,255,255,0.5);
+            margin-top: 2px;
+        }
+
+        .endpoint-arrow {
+            color: rgba(255,255,255,0.3);
+            font-size: 1.2rem;
+        }
+
+        .image-section {
+            border-top: 1px solid rgba(255,255,255,0.1);
+            padding-top: 30px;
+        }
+
+        .image-section img {
+            max-width: 100%;
+            border-radius: 10px;
+            border: 1px solid rgba(255,255,255,0.15);
+        }
+
+        .footer {
+            margin-top: 30px;
+            font-size: 0.75rem;
+            color: rgba(255,255,255,0.3);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>MicroSpring Boot</h1>
+        <p class="subtitle">Minimal Java Web Server with IoC Framework</p>
+        <span class="badge">⚡ Java Reflection &amp; IoC</span>
+
+        <div class="endpoints">
+            <a href="/hello" class="endpoint-card" id="hello-link">
+                <span class="method-badge">GET</span>
+                <div class="endpoint-info">
+                    <div class="endpoint-path">/hello</div>
+                    <div class="endpoint-desc">Simple greeting from HelloController</div>
+                </div>
+                <span class="endpoint-arrow">→</span>
+            </a>
+
+            <a href="/greeting" class="endpoint-card" id="greeting-default-link">
+                <span class="method-badge">GET</span>
+                <div class="endpoint-info">
+                    <div class="endpoint-path">/greeting</div>
+                    <div class="endpoint-desc">Default greeting (name=World)</div>
+                </div>
+                <span class="endpoint-arrow">→</span>
+            </a>
+
+            <a href="/greeting?name=Diego" class="endpoint-card" id="greeting-param-link">
+                <span class="method-badge">GET</span>
+                <div class="endpoint-info">
+                    <div class="endpoint-path">/greeting?name=Diego</div>
+                    <div class="endpoint-desc">Greeting with @RequestParam</div>
+                </div>
+                <span class="endpoint-arrow">→</span>
+            </a>
+
+            <a href="/greet?name=ECI" class="endpoint-card" id="greet-link">
+                <span class="method-badge">GET</span>
+                <div class="endpoint-info">
+                    <div class="endpoint-path">/greet?name=ECI</div>
+                    <div class="endpoint-desc">Formatted greeting with request counter</div>
+                </div>
+                <span class="endpoint-arrow">→</span>
+            </a>
+
+            <a href="/image.png" class="endpoint-card" id="image-link">
+                <span class="method-badge" style="background:#6f42c1;">GET</span>
+                <div class="endpoint-info">
+                    <div class="endpoint-path">/image.png</div>
+                    <div class="endpoint-desc">Static PNG image serving</div>
+                </div>
+                <span class="endpoint-arrow">→</span>
+            </a>
+        </div>
+
+        <div class="image-section">
+            <img src="/image.png" alt="Static PNG served by MicroSpring Boot" id="served-image">
+        </div>
+
+        <div class="footer">
+            Escuela Colombiana de Ingeniería Julio Garavito &bull; TDSE Lab &bull; 2026
+        </div>
+    </div>
+</body>
+</html>
