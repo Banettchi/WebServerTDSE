@@ -1,137 +1,193 @@
-# Taller de Arquitecturas de Servidores de Aplicaciones - Framework IoC y Servidor Web
+# TDSE – Servidor Web HTTP con Framework IoC Reflexivo en Java
 
 ## Introduccion
-Este proyecto fue desarrollado como prototipo minimo para el curso de Arquitecturas de Servidores de Aplicaciones. Los objetivos principales son:
 
-1. Construir un servidor Web tipo Apache en Java Puro (sin utilizar frameworks web de alto nivel) capaz de entregar paginas HTML e imagenes PNG, y atender multiples solicitudes de forma no concurrente.
-2. Demostrar las capacidades reflexivas de Java construyendo un framework de Inversion de Control (IoC) minimo para extraer informacion de POJOs anotados y derivar una aplicacion web a partir de ellos.
+Este proyecto fue desarrollado como prototipo minimo para el taller de Arquitecturas de Servidores de Aplicaciones (TDSE), con dos objetivos centrales:
 
----
+- Construir un servidor Web tipo Apache en Java puro, sin frameworks de alto nivel.
+- Demostrar las capacidades reflexivas de Java para cargar POJOs anotados y publicarlos como servicios HTTP.
 
-## Diseno y Arquitectura
-La solucion propuesta se divide en tres componentes arquitectonicos coherentes y modulares:
-
-1. **Servidor HTTP Core:** 
-   Implementado usando hilos basicos y `ServerSocket` para escuchar en el puerto designado (8080). Encargado de parsear la linea de Request HTTP (soportado explicitamente GET), dividiendo la ruta de los parametros de formato de busqueda HTTP (Query params). Decide dinamicamente si cederle el bloque a un recurso dinamico resuelto por el framework inverso, o servir estaticamente un archivo del disco de recursos.
-
-2. **Framework IoC por Meta-Protocolos:** 
-   El nucleo reflexivo. Utiliza un `ClassScanner` de utilidades capaz de recorrer el arbol de origenes y directorios del classpath, localizando activamente las clases anotadas con la directiva `@RestController`. Al iniciarse el servidor, instanciara cada endpoint, explorando individualmente los metodos firmados con `@GetMapping` para enrutarlos y extraer los requerimientos de la peticion mapeando parametros default si es pertinente el atributo (mediante `@RequestParam`).
-
-3. **Aplicacion Web de Ejemplo:** 
-   Constituye el conjunto de POJOs simples elaborados y recursos web interactivos que consumiran y pondran a prueba los servicios provistos para verificar operacion continua y enrutado correcto sin acoplarse con la logica primaria del servidor HTTP.
+El servidor atiende solicitudes de manera secuencial (no concurrente) y soporta entrega de recursos estaticos (HTML y PNG).
 
 ---
 
-## Que se implemento
+## Que implementa
 
-### Servidor HTTP Minimo
-- Puerto 8080 por defecto de escucha HTTP/1.1.
-- Soporta procesamiento nativo del verbo `GET`.
-- Entrega recursos estaticos mapeados desde el subdirectorio base `src/main/resources/static`.
-- Tipos MIME procesados y despachados con un Header limpio: `text/html`, `image/png`, `text/css`, `application/javascript`, `image/jpeg`, etc.
-- Invocacion de metodos de instancia en caliente con conversion a subtipos limitados al retorno `String` dictado en los requerimientos del taller primario.
+### 1. Servidor HTTP
 
-### Framework IoC por Reflexion Java
-Anotaciones estandar implementadas:
+- Servidor basado en `ServerSocket` en el puerto 8080.
+- Soporte del metodo GET.
+- Enrutamiento dinamico hacia metodos anotados con `@GetMapping`.
+- Entrega de archivos estaticos desde `src/main/resources/static`.
+- Tipos MIME soportados: `text/html`, `image/png`, `text/css`, `application/javascript`.
 
-- `@RestController`: Etiqueta Target Class para descubrir e interpretar componentes elegibles para su carga autonoma por el contenedor IoC interno del Servidor.
-- `@GetMapping("ruta")`: Marca de metodo permitida para enrutar una URI a funcionalidad de backend.
-- `@RequestParam(value, defaultValue)`: Anotacion aplicada a parametros de metodos expuestos capaz de mapear queries URL-Encoded del lado del cliente, cubriendo con el `defaultValue` cualquier omision.
+### 2. Framework IoC por reflexion
 
-Modos de ejecucion contemplados:
-- **Carga de Contexto Explicita:** Ejecutable al estilo de entornos basicos como frameworks de Test, pasando como argumento de ejecucion final la clase completamente cualificada por la terminal.
-- **Auto-Escaneo (Classpath general):** Funcionalidad mas cercana al Springboot Moderno; al ejecutarse autonomamente, mapea el directorio y construye la tabla de rutas.
+Anotaciones implementadas:
 
-### Archivos Relevantes
-- `src/main/java/.../MicroSpringBoot.java` // Entry Point General
-- `src/main/java/.../HttpServer.java` // Logic Layer HTTP Dispatcher
-- `src/main/java/.../ClassScanner.java` // System Class Directory Traverser
-- `src/main/java/.../annotation/RestController.java` // Definicion Runtime Meta-Type
-- `src/main/java/.../annotation/GetMapping.java` // Definicion URIMetadata Endpoint
-- `src/main/java/.../annotation/RequestParam.java` // Definicion URI Extraction Parameter
-- `src/main/java/.../controller/GreetingController.java` // Test Bean implementando todo
-- `src/main/java/.../controller/HelloController.java` // Test Bean index
-- `src/main/resources/static/index.html` // Web UI index
-- `src/main/resources/static/image.png` // Multimedia check
-- `src/test/java/.../MicroSpringBootTest.java` // Integration Verification Cases
+| Anotacion | Alcance | Descripcion |
+|---|---|---|
+| `@RestController` | Clase | Marca un POJO como componente web |
+| `@GetMapping(value)` | Metodo | Asocia una ruta URI al metodo manejador |
+| `@RequestParam(value, defaultValue)` | Parametro | Extrae parametros de la query string |
 
----
+Capacidades:
 
-## Requisitos de Entorno
-- Entorno OS (Windows/Linux)
-- Compilador Java Nativo version 11 garantizada, hasta Java 21 LTS recomendado.
-- Build Tool Maven 3.x+ (manejable global).
+- Carga explicita de un POJO por linea de comandos (similar a frameworks de testing).
+- Escaneo automatico del classpath para detectar todas las clases con `@RestController`.
+- Instanciacion via reflexion: `getDeclaredConstructor().newInstance()`.
+- Invocacion reflexiva de metodos: `Method.invoke(instance, args)`.
+
+### 3. Aplicacion web de ejemplo
+
+Controladores incluidos:
+
+- `HelloController` con ruta `/hello`.
+- `GreetingController` con ruta `/greeting` y soporte de `@RequestParam`.
+- Pagina `index.html` de navegacion entre endpoints.
+- Imagen `image.png` para validar entrega de recursos estaticos PNG.
 
 ---
 
-## Instalacion y Uso (Ejecucion Local / Debug)
+## Estructura del proyecto
 
-1. **Empaquetado y Compilacion Limpia**
-   Desde la raiz principal con el descriptor POM.xml:
-   ```bash
-   mvn clean package
-   ```
-
-2. **Arranque Servidor (Modo Escaneo de Componentes Completo)**
-   ```bash
-   java -cp target/classes co.edu.escuelaing.reflexionlab.MicroSpringBoot
-   ```
-
-3. **Arranque Servidor (Modo Clase Explicita en la linea de comandos)**
-   ```bash
-   java -cp target/classes co.edu.escuelaing.reflexionlab.MicroSpringBoot co.edu.escuelaing.reflexionlab.controller.HelloController
-   ```
-
-### Accesibilidad de Endpoints
-Acceso al explorador:
-- Web Page Estatico Base (HTML/CSS UI): `http://localhost:8080/`
-- API GET (Hello Index estatico): `http://localhost:8080/hello`
-- Default query Parameter API: `http://localhost:8080/greeting`
-- Custom Extractable Query Param: `http://localhost:8080/greeting?name=Esteban`
-- Archivo binario estatico expuesto (Evidenciando flujos binarios): `http://localhost:8080/image.png`
+```
+WebServerTDSE/
+├── pom.xml
+├── .gitignore
+├── README.md
+└── src/
+    ├── main/
+    │   ├── java/co/edu/escuelaing/reflexionlab/
+    │   │   ├── MicroSpringBoot.java         <- Punto de entrada / contenedor IoC
+    │   │   ├── HttpServer.java               <- Servidor HTTP (ServerSocket)
+    │   │   ├── ClassScanner.java             <- Escaner de classpath (Reflexion)
+    │   │   ├── annotation/
+    │   │   │   ├── RestController.java
+    │   │   │   ├── GetMapping.java
+    │   │   │   └── RequestParam.java
+    │   │   └── controller/
+    │   │       ├── HelloController.java
+    │   │       └── GreetingController.java
+    │   └── resources/
+    │       └── static/
+    │           ├── index.html
+    │           └── image.png
+    └── test/
+        └── java/co/edu/escuelaing/reflexionlab/
+            └── MicroSpringBootTest.java
+```
 
 ---
 
-## Evidencia de Pruebas Automatizadas
+## Requisitos
 
-Se instrumentaron pruebas base implementando el stack `JUnit 5`. Cubren inyeccion, anotaciones, mapeo de Query Params, rutas default del servidor HTTP y detecciones directas de la capa Classloader Reflexiva.
+- Java 11 o superior
+- Maven 3.6 o superior
 
-Correr pruebas automatizadas internamente:
+---
+
+## Como ejecutarlo
+
+### Compilar
+
+```bash
+mvn clean package
+```
+
+### Modo escaneo automatico (detecta todos los @RestController del classpath)
+
+```bash
+java -cp target/classes co.edu.escuelaing.reflexionlab.MicroSpringBoot
+```
+
+### Modo clase explicita (como frameworks de testing)
+
+```bash
+java -cp target/classes co.edu.escuelaing.reflexionlab.MicroSpringBoot co.edu.escuelaing.reflexionlab.controller.HelloController
+```
+
+### Endpoints disponibles
+
+| URL | Descripcion |
+|-----|-------------|
+| `http://localhost:8080/` | Pagina HTML estatica |
+| `http://localhost:8080/hello` | Respuesta REST de `HelloController` |
+| `http://localhost:8080/greeting` | Saludo con nombre por defecto (World) |
+| `http://localhost:8080/greeting?name=Diego` | Saludo con `@RequestParam` |
+| `http://localhost:8080/image.png` | Imagen PNG estatica |
+
+---
+
+## Pruebas automatizadas
+
+Se ejecutan con:
+
 ```bash
 mvn test
 ```
 
-**Resultado de Unit Tests (Evidencia):**  
-![Tests Passing](docs/img/tests.png)
+Resultado:
+
+![Resultado de pruebas](docs/img/tests.png)
 
 ---
 
-## Despliegue en Instancia AWS EC2
+## Despliegue en AWS EC2
 
-Las siguientes imagenes son evidencias graficas del procedimiento completo y transparente para arrancar el entorno virtual en los servicios nube de Amazon usando EC2 como capa computacional basica aislada con redes SG.
+### Paso 1 – Subida del artefacto
 
-### 1. Conexion SSH a Instancia AWS Linux / Transferencia de codigo
-*(Clonado o SFTP de binarios hacia el motor computacional).*  
-![Conexion Servidor e Ingreso Archivos](docs/img/aws_ssh.png)
+```bash
+scp -i "clave.pem" -r target/classes ec2-user@<PUBLIC-DNS>:~/WebServerTDSE/
+```
 
-### 2. Ejecucion exitosa del Servidor Virtual
-*(Servicio activo, despachando sub-procesos basicos en el Terminal tras arranque JVM).*  
-![Output Engine Consola Activa](docs/img/aws_running.png)
+![Subida del artefacto](docs/img/aws_upload.png)
 
-### 3. Apertura de Networking y Reglas sobre Security Group (EC2)
-*(Firewall habilitando Inbound rules externas TCP con puerta al WebServer).*  
-![Network Config Rules](docs/img/aws_sg.png)
+### Paso 2 – Conexion SSH y verificacion
 
-### 4. Pruebas Funcionales usando el Public DNS Autorizado de AWS
-*(Resolucion del cliente HTTP frente a peticiones enrutadas externamente por interred a AWS).*
+```bash
+ssh -i "clave.pem" ec2-user@<PUBLIC-DNS>
+```
 
-**Retorno de Datos Estructurados HTML y Respuesta Dinamica:**  
-![Prueba de HTML Front-Page Web](docs/img/aws_endpoints.png)
+![Conexion SSH](docs/img/aws_ssh.png)
 
-**Comprobacion Componente Estatico PNG servido internamente:**  
-![Prueba de Image Resource Binario AWS](docs/img/aws_image.png)
+### Paso 3 – Ejecucion del servidor en EC2
+
+```bash
+java -cp classes co.edu.escuelaing.reflexionlab.MicroSpringBoot
+```
+
+![Servidor corriendo en EC2](docs/img/aws_running.png)
+
+### Paso 4 – Reglas de entrada en Security Group
+
+Se habilito el puerto 8080 para trafico TCP entrante desde cualquier origen.
+
+![Reglas Security Group](docs/img/aws_sg.png)
+
+### Paso 5 – Pruebas desde el DNS publico
+
+```
+http://<PUBLIC-DNS>:8080/
+http://<PUBLIC-DNS>:8080/hello
+http://<PUBLIC-DNS>:8080/greeting?name=Diego
+http://<PUBLIC-DNS>:8080/image.png
+```
+
+Endpoint raiz:
+
+![Prueba endpoint raiz](docs/img/aws_root.png)
+
+Endpoint con parametro:
+
+![Prueba con @RequestParam](docs/img/aws_greeting.png)
+
+Recurso PNG estatico:
+
+![Prueba imagen PNG](docs/img/aws_image.png)
 
 ---
 
 ## Conclusion
-El proyecto prototipo satisface completamente el objetivo principal enmarcado para el laboratorio. Se aprovisiona satisfactoriamente a modo practico -con el uso de POJOS abstractos en lugar de estructuras acopladas Servlet nativas- la aplicacion concurrente de Meta-protocolos Reflexivos capaces de mapear en tiempo e instrumentar un sub-set web minimalista, validando su soporte base extensible con paginas visuales complejas `.html/css` y su soporte generico a transacciones binarias como PNGs. Un gran avance sentando bases de extension para integraciones en un macro-servidor de alta frecuencia o escaneo integral de dependencias JAR.
+
+El prototipo cumple el objetivo del taller: servidor web funcional con framework IoC reflexivo basado en POJOs anotados. Se implemento mapeo de rutas por anotaciones, extraccion de parametros de query string con valores por defecto, y entrega de recursos estaticos HTML y PNG.
