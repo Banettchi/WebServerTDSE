@@ -129,7 +129,7 @@ mvn test
 
 Resultado:
 
-![Resultado de pruebas](docs/img/tests.png)
+![alt text](image.png)
 
 ---
 
